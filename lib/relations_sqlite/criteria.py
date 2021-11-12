@@ -39,6 +39,7 @@ class HAS(SETS, relations_sql.HAS):
 
     CONTAINS = relations_sqlite.CONTAINS
 
+
 class ANY(SETS, relations_sql.ANY):
     """
     For if the left has any the members of right

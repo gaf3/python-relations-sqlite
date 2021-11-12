@@ -218,7 +218,13 @@ class TestCONTAINS(unittest.TestCase):
         criterion = CONTAINS("totes", ["mai", "goats"])
 
         criterion.generate()
-        self.assertEqual(criterion.sql, """json_extract(?,'$') IN (SELECT json_data.value FROM json_each(`totes`) AS json_data)""")
+        self.assertEqual(criterion.sql, """(NOT (SELECT COUNT(*) FROM json_each(json_extract(?,'$')) as l LEFT JOIN json_each(`totes`) as r ON l.value=r.value WHERE r.value IS NULL))""")
+        self.assertEqual(criterion.args, ['["mai", "goats"]'])
+
+        criterion = CONTAINS("totes", ["mai", "goats"], invert=True)
+
+        criterion.generate()
+        self.assertEqual(criterion.sql, """(SELECT COUNT(*) FROM json_each(json_extract(?,'$')) as l LEFT JOIN json_each(`totes`) as r ON l.value=r.value WHERE r.value IS NULL)""")
         self.assertEqual(criterion.args, ['["mai", "goats"]'])
 
 

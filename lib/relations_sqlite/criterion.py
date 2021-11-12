@@ -85,7 +85,9 @@ class CONTAINS(CRITERION, relations_sql.CONTAINS):
 
     RIGHT = relations_sqlite.VALUE
 
-    OPERAND = "%s IN (SELECT json_data.value FROM json_each(%s) AS json_data)"
+    INVERT = "(SELECT COUNT(*) FROM json_each(%s) as l LEFT JOIN json_each(%s) as r ON l.value=r.value WHERE r.value IS NULL)"
+    OPERAND = "(NOT %s)" % INVERT
+
     REVERSE = True
 
 

@@ -24,6 +24,12 @@ class Meta(relations.Model):
     things = dict, {"extract": "for__0____1"}
 
 
+def dict_factory(cursor, row):
+    d = {}
+    for idx, col in enumerate(cursor.description):
+        d[col[0]] = row[idx]
+    return d
+
 class TestSQLite3(unittest.TestCase):
 
     maxDiff = None
@@ -32,6 +38,8 @@ class TestSQLite3(unittest.TestCase):
 
         self.connection = sqlite3.connect("/main.db")
         self.connection.cursor().execute(f"ATTACH DATABASE '/test_sqlite3.db' AS `test_sqlite3`")
+
+        self.connection.row_factory = dict_factory
 
     def tearDown(self):
 
@@ -91,18 +99,20 @@ class TestSQLite3(unittest.TestCase):
 
             cursor.execute(query.sql, query.args)
 
-            if cursor.rowcount != 1:
-                return None
+            rows = cursor.fetchall()
 
-            self.assertEqual(cursor.fetchone()["name"], value)
+            if len(rows) != 1:
+                name = None
+            else:
+                name = rows[0]["name"]
+
+            self.assertEqual(name, value, query.sql)
 
         check("yep", flag=True)
 
         check("dive", flag=False)
 
         check("dive", people={"tom", "mary"})
-
-        check("dive", stuff=[1, 2, 3, {"relations.io": {"1": None}}])
 
         check("dive", things={"a": {"b": [1, 2], "c": "sure"}, "4": 5, "for": [{"1": "yep"}]})
 
@@ -112,13 +122,13 @@ class TestSQLite3(unittest.TestCase):
 
         check("dive", things__a__c__like="su")
 
-        check("dive", things__a__d__null=True)
+        check("yep", things__a__b__null=True)
 
         check("dive", things____4=5)
 
         check(None, things__a__b__0__gt=1)
 
-        check(None, things__a__c__notlike="su")
+        check(None, things__a__c__not_like="su")
 
         check(None, things__a__d__null=False)
 
@@ -126,7 +136,11 @@ class TestSQLite3(unittest.TestCase):
 
         check("dive", things__a__b__has=1)
 
-        check(None, things__a__b__has=3)
+        check(None, things__a__b__has=[1, 3])
+
+        check("dive", name="dive", things__a__b__not_has=[1, 3])
+
+        check("yep", name="yep", things__a__b__not_has=[1, 3])
 
         check("dive", things__a__b__any=[1, 3])
 

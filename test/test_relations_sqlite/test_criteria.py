@@ -71,18 +71,20 @@ class TestHAS(unittest.TestCase):
         criteria = HAS("totes", ["mai", "goats"])
 
         criteria.generate()
-        self.assertEqual(criteria.sql, """json_extract(?,'$') IN (SELECT json_data.value FROM json_each(`totes`) AS json_data)""")
+        self.assertEqual(criteria.sql, """(NOT (SELECT COUNT(*) FROM json_each(json_extract(?,'$')) as l LEFT JOIN json_each(`totes`) as r ON l.value=r.value WHERE r.value IS NULL))""")
         self.assertEqual(criteria.args, ['["mai", "goats"]'])
 
 
 class TestANY(unittest.TestCase):
+
+    maxDiff = None
 
     def test_generate(self):
 
         criteria = ANY("totes", ["mai", "goats"])
 
         criteria.generate()
-        self.assertEqual(criteria.sql, """(json_extract(?,'$') IN (SELECT json_data.value FROM json_each(`totes`) AS json_data) OR json_extract(?,'$') IN (SELECT json_data.value FROM json_each(`totes`) AS json_data))""")
+        self.assertEqual(criteria.sql, """((NOT (SELECT COUNT(*) FROM json_each(json_extract(?,'$')) as l LEFT JOIN json_each(`totes`) as r ON l.value=r.value WHERE r.value IS NULL)) OR (NOT (SELECT COUNT(*) FROM json_each(json_extract(?,'$')) as l LEFT JOIN json_each(`totes`) as r ON l.value=r.value WHERE r.value IS NULL)))""")
         self.assertEqual(criteria.args, ['["mai"]', '["goats"]'])
 
 
@@ -93,7 +95,7 @@ class TestALL(unittest.TestCase):
         criteria = ALL("totes", ["mai", "goats"])
 
         criteria.generate()
-        self.assertEqual(criteria.sql, """(json_extract(?,'$') IN (SELECT json_data.value FROM json_each(`totes`) AS json_data) AND json_array_length(`totes`)=json_array_length(json_extract(?,'$')))""")
+        self.assertEqual(criteria.sql, """((NOT (SELECT COUNT(*) FROM json_each(json_extract(?,'$')) as l LEFT JOIN json_each(`totes`) as r ON l.value=r.value WHERE r.value IS NULL)) AND json_array_length(`totes`)=json_array_length(json_extract(?,'$')))""")
         self.assertEqual(criteria.args, ['["mai", "goats"]', '["mai", "goats"]'])
 
 
@@ -122,7 +124,7 @@ class TestOP(unittest.TestCase):
         criteria = OP(totes__a__not_has=[1, 2, 3])
 
         criteria.generate()
-        self.assertEqual(criteria.sql, """NOT json_extract(?,'$') IN (SELECT json_data.value FROM json_each(json_extract(`totes`,?)) AS json_data)""")
+        self.assertEqual(criteria.sql, """NOT (NOT (SELECT COUNT(*) FROM json_each(json_extract(?,'$')) as l LEFT JOIN json_each(json_extract(`totes`,?)) as r ON l.value=r.value WHERE r.value IS NULL))""")
         self.assertEqual(criteria.args, ['[1, 2, 3]', '$.a'])
 
         criteria = OP(totes=1, JSONIFY=True)
@@ -142,19 +144,19 @@ class TestOP(unittest.TestCase):
         criteria = OP(totes__a__has=1, EXTRACTED=True)
 
         criteria.generate()
-        self.assertEqual(criteria.sql, """json_extract(?,'$') IN (SELECT json_data.value FROM json_each(`totes__a`) AS json_data)""")
+        self.assertEqual(criteria.sql, """(NOT (SELECT COUNT(*) FROM json_each(json_extract(?,'$')) as l LEFT JOIN json_each(`totes__a`) as r ON l.value=r.value WHERE r.value IS NULL))""")
         self.assertEqual(criteria.args, ["[1]"])
 
         criteria = OP(totes__a__any=[1, 2], EXTRACTED=True)
 
         criteria.generate()
-        self.assertEqual(criteria.sql, """(json_extract(?,'$') IN (SELECT json_data.value FROM json_each(`totes__a`) AS json_data) OR json_extract(?,'$') IN (SELECT json_data.value FROM json_each(`totes__a`) AS json_data))""")
+        self.assertEqual(criteria.sql, """((NOT (SELECT COUNT(*) FROM json_each(json_extract(?,'$')) as l LEFT JOIN json_each(`totes__a`) as r ON l.value=r.value WHERE r.value IS NULL)) OR (NOT (SELECT COUNT(*) FROM json_each(json_extract(?,'$')) as l LEFT JOIN json_each(`totes__a`) as r ON l.value=r.value WHERE r.value IS NULL)))""")
         self.assertEqual(criteria.args, ['[1]', '[2]'])
 
         criteria = OP(totes__a__all=[1, 2], EXTRACTED=True)
 
         criteria.generate()
-        self.assertEqual(criteria.sql, """(json_extract(?,'$') IN (SELECT json_data.value FROM json_each(`totes__a`) AS json_data) AND json_array_length(`totes__a`)=json_array_length(json_extract(?,'$')))""")
+        self.assertEqual(criteria.sql, """((NOT (SELECT COUNT(*) FROM json_each(json_extract(?,'$')) as l LEFT JOIN json_each(`totes__a`) as r ON l.value=r.value WHERE r.value IS NULL)) AND json_array_length(`totes__a`)=json_array_length(json_extract(?,'$')))""")
         self.assertEqual(criteria.args, ['[1, 2]', '[1, 2]'])
 
         self.assertRaisesRegex(relations_sql.SQLError, "need single pair", OP, "nope")
