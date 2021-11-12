@@ -67,12 +67,18 @@ CREATE UNIQUE INDEX `meta_name` ON `meta` (`name`);
             definition={
                 "name": "evil",
                 "schema": "scheming",
-                "fields": Meta.thy().define()["fields"]
+                "fields": Meta.thy().define()["fields"],
+                "index": Meta.thy().define()["index"],
+                "unique": Meta.thy().define()["unique"]
             }
         )
 
         ddl.generate(indent=2)
         self.assertEqual(ddl.sql, """ALTER TABLE `scheming`.`evil` RENAME TO `scheming`.`_old_evil`;
+
+DROP INDEX `scheming`.`evil_spend`;
+
+DROP INDEX `scheming`.`evil_name`;
 
 CREATE TABLE IF NOT EXISTS `dreaming`.`good` (
   `id` INTEGER PRIMARY KEY,
@@ -84,6 +90,10 @@ CREATE TABLE IF NOT EXISTS `dreaming`.`good` (
   `things` TEXT NOT NULL,
   `things__for__0____1` TEXT AS (json_extract(`things`,'$.for[0]."1"'))
 );
+
+CREATE INDEX `dreaming`.`good_spend` ON `good` (`spend`);
+
+CREATE UNIQUE INDEX `dreaming`.`good_name` ON `good` (`name`);
 
 INSERT
 INTO
