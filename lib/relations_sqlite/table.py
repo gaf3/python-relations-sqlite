@@ -22,17 +22,43 @@ class TABLE(relations_sqlite.DDL, relations_sql.TABLE):
 
     INDEXES = False
 
+    def name(self, state="migration", prefix=''):
+        """
+        Generate a quoted name, with table as the default
+        """
+
+        if isinstance(state, str):
+            state = {
+                "name": state,
+                "schema": state
+            }
+
+        store = prefix + (self.definition if state["name"] == "definition" or "store" not in self.migration else self.migration)["store"]
+        schema = (self.definition if state["schema"] == "definition" else self.migration).get("schema")
+
+        table = self.NAME(store, schema=schema)
+
+        table.generate()
+
+        return table.sql
+
     def modify(self, indent=0, count=0, pad=' ', **kwargs): # pylint: disable=too-many-locals,too-many-branches
         """
         MODIFY DLL
         """
 
-        sql = [f"""ALTER TABLE {self.name(state='definition')} RENAME TO `_temporary`"""]
+        sql = [f"""ALTER TABLE {self.name(state='definition')} RENAME TO {self.name(state='definition', prefix='_old_')}"""]
+
+        table = {
+            "name": self.migration.get("store", self.definition["store"]),
+            "schema": self.migration.get("schema", self.definition.get("schema"))
+        }
 
         migration = {
+            **table,
             "fields": [],
             "index": {},
-            "unique": {}
+            "unique": {},
         }
 
         for attr in ["name", "store", "schema"]:
@@ -58,11 +84,6 @@ class TABLE(relations_sqlite.DDL, relations_sql.TABLE):
             migration["fields"].append(field)
 
         indexes = []
-
-        table = {
-            "name": self.migration.get("store", self.definition["store"]),
-            "schema": self.migration.get("schema", self.definition.get("schema"))
-        }
 
         for index in self.definition.get("index", {}):
             indexes.append(self.INDEX(definition={
@@ -107,12 +128,12 @@ class TABLE(relations_sqlite.DDL, relations_sql.TABLE):
 
         query = self.INSERT(
             self.NAME(ddl.migration["store"], schema=ddl.migration.get("schema")),
-            SELECT=self.SELECT(FIELDS=renames).FROM("_temporary")
+            SELECT=self.SELECT(FIELDS=renames).FROM(relations_sql.SQL(self.name(state='definition', prefix='_old_')))
         )
 
         query.generate(indent, count, pad, **kwargs)
         sql.append(query.sql)
 
-        sql.append("""DROP TABLE `_temporary`""")
+        sql.append(f"""DROP TABLE {self.name(state='definition', prefix='_old_')}""")
 
         self.sql = f"{delimitter.join(sql)};\n"

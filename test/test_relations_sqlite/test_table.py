@@ -26,6 +26,15 @@ class TestTABLE(unittest.TestCase):
 
     maxDiff = None
 
+    def test_name(self):
+
+        ddl = TABLE(schema="people", name="stuff", definition={"schema": "persons", "name": "things"})
+
+        self.assertEqual(ddl.name(), """`people`.`stuff`""")
+        self.assertEqual(ddl.name(state="definition"), """`persons`.`things`""")
+        self.assertEqual(ddl.name(state={"name": "definition", "schema": "migration"}), """`people`.`things`""")
+        self.assertEqual(ddl.name(state={"name": "definition", "schema": "migration"}, prefix="_old_"), """`people`.`_old_things`""")
+
     def test_create(self):
 
         ddl = TABLE(**Meta.thy().define())
@@ -63,7 +72,7 @@ CREATE UNIQUE INDEX `meta_name` ON `meta` (`name`);
         )
 
         ddl.generate(indent=2)
-        self.assertEqual(ddl.sql, """ALTER TABLE `scheming`.`evil` RENAME TO `_temporary`;
+        self.assertEqual(ddl.sql, """ALTER TABLE `scheming`.`evil` RENAME TO `scheming`.`_old_evil`;
 
 CREATE TABLE IF NOT EXISTS `dreaming`.`good` (
   `id` INTEGER PRIMARY KEY,
@@ -88,9 +97,9 @@ SELECT
   `stuff` AS `stuff`,
   `things` AS `things`
 FROM
-  `_temporary`;
+  `scheming`.`_old_evil`;
 
-DROP TABLE `_temporary`;
+DROP TABLE `scheming`.`_old_evil`;
 """)
         self.assertEqual(ddl.args, [])
 
@@ -104,7 +113,7 @@ DROP TABLE `_temporary`;
         )
 
         ddl.generate(indent=2)
-        self.assertEqual(ddl.sql,"""ALTER TABLE `simple` RENAME TO `_temporary`;
+        self.assertEqual(ddl.sql,"""ALTER TABLE `simple` RENAME TO `_old_simple`;
 
 DROP INDEX `simple_name`;
 
@@ -124,9 +133,9 @@ SELECT
   `id` AS `id`,
   `name` AS `name`
 FROM
-  `_temporary`;
+  `_old_simple`;
 
-DROP TABLE `_temporary`;
+DROP TABLE `_old_simple`;
 """)
         self.assertEqual(ddl.args, [])
 
@@ -162,7 +171,7 @@ DROP TABLE `_temporary`;
         )
 
         ddl.generate(indent=2)
-        self.assertEqual(ddl.sql,"""ALTER TABLE `yep` RENAME TO `_temporary`;
+        self.assertEqual(ddl.sql,"""ALTER TABLE `yep` RENAME TO `_old_yep`;
 
 DROP INDEX `yep_spend`;
 
@@ -191,9 +200,9 @@ SELECT
   `stuff` AS `stuff`,
   `things` AS `thingies`
 FROM
-  `_temporary`;
+  `_old_yep`;
 
-DROP TABLE `_temporary`;
+DROP TABLE `_old_yep`;
 """)
         self.assertEqual(ddl.args, [])
 
@@ -229,7 +238,7 @@ DROP TABLE `_temporary`;
         )
 
         ddl.generate(indent=2)
-        self.assertEqual(ddl.sql, """ALTER TABLE `yep` RENAME TO `_temporary`;
+        self.assertEqual(ddl.sql, """ALTER TABLE `yep` RENAME TO `_old_yep`;
 
 DROP INDEX `yep_spend`;
 
@@ -262,9 +271,9 @@ SELECT
   `stuff` AS `stuff`,
   `things` AS `thingies`
 FROM
-  `_temporary`;
+  `_old_yep`;
 
-DROP TABLE `_temporary`;
+DROP TABLE `_old_yep`;
 """)
         self.assertEqual(ddl.args, [])
 
@@ -284,7 +293,7 @@ DROP TABLE `_temporary`;
         )
 
         ddl.generate(indent=2)
-        self.assertEqual(ddl.sql, """ALTER TABLE `yep` RENAME TO `_temporary`;
+        self.assertEqual(ddl.sql, """ALTER TABLE `yep` RENAME TO `_old_yep`;
 
 CREATE TABLE IF NOT EXISTS `yep` (
   `id` INTEGER PRIMARY KEY,
@@ -306,9 +315,9 @@ SELECT
   `spend` AS `spend`,
   `stuff` AS `stuff`
 FROM
-  `_temporary`;
+  `_old_yep`;
 
-DROP TABLE `_temporary`;
+DROP TABLE `_old_yep`;
 """)
         self.assertEqual(ddl.args, [])
 
@@ -328,7 +337,7 @@ DROP TABLE `_temporary`;
         )
 
         ddl.generate(indent=2)
-        self.assertEqual(ddl.sql, """ALTER TABLE `yep` RENAME TO `_temporary`;
+        self.assertEqual(ddl.sql, """ALTER TABLE `yep` RENAME TO `_old_yep`;
 
 CREATE TABLE IF NOT EXISTS `yep` (
   `id` INTEGER PRIMARY KEY,
@@ -350,9 +359,9 @@ SELECT
   `spend` AS `spend`,
   `stuff` AS `stuff`
 FROM
-  `_temporary`;
+  `_old_yep`;
 
-DROP TABLE `_temporary`;
+DROP TABLE `_old_yep`;
 """)
         self.assertEqual(ddl.args, [])
 
@@ -383,7 +392,7 @@ DROP TABLE `_temporary`;
         )
 
         ddl.generate(indent=2)
-        self.assertEqual(ddl.sql, """ALTER TABLE `yep` RENAME TO `_temporary`;
+        self.assertEqual(ddl.sql, """ALTER TABLE `yep` RENAME TO `_old_yep`;
 
 DROP INDEX `yep_spend`;
 
@@ -404,14 +413,14 @@ INTO
   `yep`
 SELECT
 FROM
-  `_temporary`;
+  `_old_yep`;
 
-DROP TABLE `_temporary`;
+DROP TABLE `_old_yep`;
 """)
         self.assertEqual(ddl.args, [])
 
         ddl.generate(indent=2)
-        self.assertEqual(ddl.sql, """ALTER TABLE `yep` RENAME TO `_temporary`;
+        self.assertEqual(ddl.sql, """ALTER TABLE `yep` RENAME TO `_old_yep`;
 
 DROP INDEX `yep_spend`;
 
@@ -432,9 +441,9 @@ INTO
   `yep`
 SELECT
 FROM
-  `_temporary`;
+  `_old_yep`;
 
-DROP TABLE `_temporary`;
+DROP TABLE `_old_yep`;
 """)
 
         self.assertEqual(ddl.args, [])
