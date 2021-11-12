@@ -138,9 +138,7 @@ class TestSQLite3(unittest.TestCase):
 
         check(None, things__a__b__has=[1, 3])
 
-        check("dive", name="dive", things__a__b__not_has=[1, 3])
-
-        check("yep", name="yep", things__a__b__not_has=[1, 3])
+        check("dive", things__a__b__not_has=[1, 3], things__a__b__null=False)
 
         check("dive", things__a__b__any=[1, 3])
 
