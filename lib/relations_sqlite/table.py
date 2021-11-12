@@ -49,9 +49,13 @@ class TABLE(relations_sqlite.DDL, relations_sql.TABLE):
 
         sql = [f"""ALTER TABLE {self.name(state='definition')} RENAME TO {self.name(state='definition', prefix='_old_')}"""]
 
+        table = {
+            "name": self.migration.get("store", self.definition["store"]),
+            "schema": self.migration.get("schema", self.definition.get("schema"))
+        }
+
         migration = {
-            "store": self.migration.get("store", self.definition["store"]),
-            "schema": self.migration.get("schema", self.definition.get("schema")),
+            **table,
             "fields": [],
             "index": {},
             "unique": {},
@@ -78,11 +82,6 @@ class TABLE(relations_sqlite.DDL, relations_sql.TABLE):
             if field.get("inject"):
                 continue
             migration["fields"].append(field)
-
-        table = {
-            "name": self.migration.get("store", self.definition["store"]),
-            "schema": self.migration.get("schema", self.definition.get("schema"))
-        }
 
         indexes = []
 
