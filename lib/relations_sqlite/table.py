@@ -2,7 +2,7 @@
 Module for Column DDL
 """
 
-# pylint: disable=unused-argument
+# pylint: disable=unused-argument,arguments-differ
 
 import relations_sql
 import relations_sqlite
