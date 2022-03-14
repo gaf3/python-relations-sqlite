@@ -22,7 +22,7 @@ class TABLE(relations_sqlite.DDL, relations_sql.TABLE):
 
     INDEXES = False
 
-    def name(self, state="migration", prefix=''):
+    def name(self, state="migration", prefix='', rename=False):
         """
         Generate a quoted name, with table as the default
         """
@@ -33,8 +33,26 @@ class TABLE(relations_sqlite.DDL, relations_sql.TABLE):
                 "schema": state
             }
 
-        store = prefix + (self.definition if state["name"] == "definition" or "store" not in self.migration else self.migration)["store"]
-        schema = (self.definition if state["schema"] == "definition" else self.migration).get("schema")
+        definition_store = (self.definition or {}).get("store")
+        definition_schema = (self.definition or {}).get("schema")
+
+        migration_store = (self.migration or {}).get("store")
+        migration_schema = (self.migration or {}).get("schema")
+
+        if state["name"] == "migration":
+            store = migration_store or definition_store
+        else:
+            store = definition_store or migration_store
+
+        store = prefix + store
+
+        if not rename:
+            if state["schema"] == "migration":
+                schema = migration_schema or definition_schema
+            else:
+                schema = definition_schema or migration_schema
+        else:
+            schema = None
 
         table = self.NAME(store, schema=schema)
 
@@ -47,7 +65,7 @@ class TABLE(relations_sqlite.DDL, relations_sql.TABLE):
         MODIFY DLL
         """
 
-        sql = [f"""ALTER TABLE {self.name(state='definition')} RENAME TO {self.name(state='definition', prefix='_old_')}"""]
+        sql = [f"""ALTER TABLE {self.name(state='definition')} RENAME TO {self.name(state='definition', prefix='_old_', rename=True)}"""]
 
         migration = {
             "store": self.migration.get("store", self.definition["store"]),
@@ -128,7 +146,7 @@ class TABLE(relations_sqlite.DDL, relations_sql.TABLE):
         sql.append(ddl.sql[:-2])
 
         query = self.INSERT(
-            self.NAME(ddl.migration["store"], schema=ddl.migration.get("schema")),
+            self.NAME(ddl.migration["store"], schema=ddl.migration.get("schema")), COLUMNS=sorted(renames.keys()),
             SELECT=self.SELECT(FIELDS=renames).FROM(relations_sql.SQL(self.name(state='definition', prefix='_old_')))
         )
 
