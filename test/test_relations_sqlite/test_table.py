@@ -34,6 +34,7 @@ class TestTABLE(unittest.TestCase):
         self.assertEqual(ddl.name(state="definition"), """`persons`.`things`""")
         self.assertEqual(ddl.name(state={"name": "definition", "schema": "migration"}), """`people`.`things`""")
         self.assertEqual(ddl.name(state={"name": "definition", "schema": "migration"}, prefix="_old_"), """`people`.`_old_things`""")
+        self.assertEqual(ddl.name(state={"name": "definition", "schema": "migration"}, prefix="_old_", rename=True), """`_old_things`""")
 
     def test_create(self):
 
@@ -74,7 +75,7 @@ CREATE UNIQUE INDEX `meta_name` ON `meta` (`name`);
         )
 
         ddl.generate(indent=2)
-        self.assertEqual(ddl.sql, """ALTER TABLE `scheming`.`evil` RENAME TO `scheming`.`_old_evil`;
+        self.assertEqual(ddl.sql, """ALTER TABLE `scheming`.`evil` RENAME TO `_old_evil`;
 
 DROP INDEX `scheming`.`evil_spend`;
 
@@ -98,6 +99,15 @@ CREATE UNIQUE INDEX `dreaming`.`good_name` ON `good` (`name`);
 INSERT
 INTO
   `dreaming`.`good`
+  (
+    `flag`,
+    `id`,
+    `name`,
+    `people`,
+    `spend`,
+    `stuff`,
+    `things`
+  )
 SELECT
   `flag` AS `flag`,
   `id` AS `id`,
@@ -139,6 +149,10 @@ CREATE UNIQUE INDEX `simple_name` ON `simple` (`name`);
 INSERT
 INTO
   `simple`
+  (
+    `id`,
+    `name`
+  )
 SELECT
   `id` AS `id`,
   `name` AS `name`
@@ -201,6 +215,15 @@ CREATE TABLE IF NOT EXISTS `yep` (
 INSERT
 INTO
   `yep`
+  (
+    `flag`,
+    `id`,
+    `name`,
+    `people`,
+    `spend`,
+    `stuff`,
+    `thingies`
+  )
 SELECT
   `flag` AS `flag`,
   `id` AS `id`,
@@ -272,6 +295,15 @@ CREATE UNIQUE INDEX `yep_label` ON `yep` (`name`);
 INSERT
 INTO
   `yep`
+  (
+    `flag`,
+    `id`,
+    `name`,
+    `people`,
+    `spend`,
+    `stuff`,
+    `thingies`
+  )
 SELECT
   `flag` AS `flag`,
   `id` AS `id`,
@@ -317,6 +349,14 @@ CREATE TABLE IF NOT EXISTS `yep` (
 INSERT
 INTO
   `yep`
+  (
+    `flag`,
+    `id`,
+    `name`,
+    `people`,
+    `spend`,
+    `stuff`
+  )
 SELECT
   `flag` AS `flag`,
   `id` AS `id`,
@@ -361,6 +401,14 @@ CREATE TABLE IF NOT EXISTS `yep` (
 INSERT
 INTO
   `yep`
+  (
+    `flag`,
+    `id`,
+    `name`,
+    `people`,
+    `spend`,
+    `stuff`
+  )
 SELECT
   `flag` AS `flag`,
   `id` AS `id`,
