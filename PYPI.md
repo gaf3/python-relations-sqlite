@@ -1,4 +1,4 @@
-# python-relations-sqlite
+# relations-sqlite
 
 Module for interacting with Relations and SQLite. It generates SQLite compatible SQL from SQL like classes in Python.
 
