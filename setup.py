@@ -7,7 +7,7 @@ with open("README.md", "r") as readme_file:
 
 setup(
     name="relations-sqlite",
-    version="0.6.1",
+    version="0.6.2",
     package_dir = {'': 'lib'},
     py_modules = [
         'relations_sqlite',
@@ -23,7 +23,7 @@ setup(
         'relations_sqlite.table'
     ],
     install_requires=[
-        'relations-sql>=0.6.6'
+        'relations-sql>=0.6.7'
     ],
     url="https://github.com/relations-dil/python-relations-sqlite",
     author="Gaffer Fitch",
