@@ -83,7 +83,7 @@ class TABLE(relations_sqlite.DDL, relations_sql.TABLE):
         renames = {}
 
         for field in self.definition.get("fields", []):
-            if field.get("inject") or field["name"] in self.migration.get("fields", {}).get("remove", []):
+            if field.get("inject") or field["name"] in self.migration.get("fields", {}).get("remove", []) or not field['store']:
                 continue
             if field["name"] in self.migration.get("fields", {}).get("change", {}):
                 migration["fields"].append({**field, **self.migration["fields"]["change"][field["name"]]})
